@@ -1,0 +1,308 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum Role {
+  ADMIN
+  ENGINEER
+  PROCUREMENT
+  SUPERVISOR
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum POStatus {
+  PENDING
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+//////////////////////////////////////////////////////
+// USER
+//////////////////////////////////////////////////////
+
+model User {
+  id            String     @id @default(uuid())
+  fullName      String
+  email         String     @unique
+  passwordHash  String
+  role          Role       @default(ENGINEER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  managedProjects   Project[]        @relation("ProjectManager")
+  materialRequests  MaterialRequest[]
+  expenses          Expense[]
+  dailyLogs         DailyLog[]
+}
+
+//////////////////////////////////////////////////////
+// PROJECT
+//////////////////////////////////////////////////////
+
+model Project {
+  id           String        @id @default(uuid())
+  projectName  String
+  location     String?
+  totalBudget  Decimal       @default(0)
+  startDate    DateTime
+  endDate      DateTime?
+  status       ProjectStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+
+  managerId    String?
+  manager      User?         @relation("ProjectManager", fields: [managerId], references: [id])
+
+  subTasks     SubTask[]
+  purchaseOrders PurchaseOrder[]
+  inventory    Inventory[]
+  materialRequests MaterialRequest[]
+  expenses     Expense[]
+  attendance   Attendance[]
+  dailyLogs    DailyLog[]
+  equipment    Equipment[]
+}
+
+//////////////////////////////////////////////////////
+// SUB TASK
+//////////////////////////////////////////////////////
+
+model SubTask {
+  id          String     @id @default(uuid())
+  projectId   String
+  taskName    String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      TaskStatus @default(PENDING)
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+//////////////////////////////////////////////////////
+// SUPPLIER
+//////////////////////////////////////////////////////
+
+model Supplier {
+  id            String          @id @default(uuid())
+  supplierName  String
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+  category      String?
+
+  purchaseOrders PurchaseOrder[]
+}
+
+//////////////////////////////////////////////////////
+// PURCHASE ORDER
+//////////////////////////////////////////////////////
+
+model PurchaseOrder {
+  id          String   @id @default(uuid())
+  orderNumber String   @unique
+  status      POStatus @default(PENDING)
+  totalAmount Decimal  @default(0)
+  orderDate   DateTime @default(now())
+
+  projectId   String
+  supplierId  String
+
+  project     Project  @relation(fields: [projectId], references: [id])
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+
+  items       POItem[]
+  payments    SupplierPayment[]
+}
+
+model POItem {
+  id             String   @id @default(uuid())
+  itemDescription String
+  quantity        Decimal
+  unitPrice       Decimal
+
+  orderId         String
+  order           PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+//////////////////////////////////////////////////////
+// SUPPLIER PAYMENT
+//////////////////////////////////////////////////////
+
+model SupplierPayment {
+  id            String   @id @default(uuid())
+  amountPaid    Decimal
+  paymentMethod String?
+  paymentDate   DateTime @default(now())
+
+  orderId       String
+  order         PurchaseOrder @relation(fields: [orderId], references: [id])
+}
+
+//////////////////////////////////////////////////////
+// INVENTORY
+//////////////////////////////////////////////////////
+
+model Inventory {
+  id              String   @id @default(uuid())
+  itemName        String
+  currentQuantity Decimal  @default(0)
+  unit            String?
+  minStockLevel   Decimal  @default(10)
+  lastUpdated     DateTime @default(now())
+
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+//////////////////////////////////////////////////////
+// MATERIAL REQUEST
+//////////////////////////////////////////////////////
+
+model MaterialRequest {
+  id          String        @id @default(uuid())
+  status      RequestStatus @default(PENDING)
+  requestDate DateTime      @default(now())
+
+  projectId   String
+  requesterId String
+
+  project     Project       @relation(fields: [projectId], references: [id])
+  requester   User          @relation(fields: [requesterId], references: [id])
+
+  items       RequestItem[]
+}
+
+model RequestItem {
+  id               String   @id @default(uuid())
+  itemName         String
+  quantityRequested Decimal
+
+  requestId        String
+  request          MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+//////////////////////////////////////////////////////
+// EQUIPMENT
+//////////////////////////////////////////////////////
+
+model Equipment {
+  id        String   @id @default(uuid())
+  name      String
+  type      String?
+  dailyRate Decimal?
+  status    String   @default("AVAILABLE")
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+//////////////////////////////////////////////////////
+// EXPENSE
+//////////////////////////////////////////////////////
+
+model Expense {
+  id          String   @id @default(uuid())
+  category    String?
+  amount      Decimal
+  description String?
+  expenseDate DateTime @default(now())
+
+  projectId   String
+  recordedById String
+
+  project     Project  @relation(fields: [projectId], references: [id])
+  recordedBy  User     @relation(fields: [recordedById], references: [id])
+}
+
+//////////////////////////////////////////////////////
+// LABOR & ATTENDANCE
+//////////////////////////////////////////////////////
+
+model Labor {
+  id        String   @id @default(uuid())
+  fullName  String
+  trade     String?
+  dailyWage Decimal
+
+  attendance Attendance[]
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  workDate  DateTime @default(now())
+  status    String?
+
+  laborId   String
+  projectId String
+
+  labor     Labor   @relation(fields: [laborId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+//////////////////////////////////////////////////////
+// DAILY LOG
+//////////////////////////////////////////////////////
+
+model DailyLog {
+  id            String   @id @default(uuid())
+  reportDate    DateTime @default(now())
+  workSummary   String
+  manpowerCount Int?
+  weather       String?
+
+  projectId     String
+  engineerId    String
+
+  project       Project @relation(fields: [projectId], references: [id])
+  engineer      User    @relation(fields: [engineerId], references: [id])
+
+  photos        LogPhoto[]
+}
+
+model LogPhoto {
+  id      String @id @default(uuid())
+  url     String
+  caption String?
+
+  logId   String
+  log     DailyLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+}
+
