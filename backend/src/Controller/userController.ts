@@ -39,3 +39,22 @@ export const CreateUser = async (req: Request, res: Response) =>{
         res.status(500).json({message: 'Internal Server Error', isSuccess: false})
     }
 }
+
+
+export const GetAllUser = async (req:Request, res:Response) => {
+  
+      const users = await prisma.user.findMany({
+        select:{
+            id: true,
+            fullName: true,
+            email: true,
+            createdAt: true,
+            role : true
+        }
+       
+      })
+      res.status(200).json({isSuccess:true, users: users})
+  
+
+}
+
