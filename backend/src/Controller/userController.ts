@@ -2,7 +2,8 @@ import {Request, Response} from 'express';
 import { ILogin, IRegister } from '../../types/Register';
 import {prisma} from '../lib/prisma';
 import argon2 from 'argon2';
-import {generateToken} from '../../helpers/jwt'
+import {generateToken} from '../../helpers/jwt';
+import {AuthRequest} from "../../types/AuthRequest"
 
 export const CreateUser = async (req: Request, res: Response) =>{
     try{
@@ -92,6 +93,41 @@ export const UserLogin = async (req: Request, res: Response) =>{
 
     }catch(error){
         console.error(error)
-        res.status(500).json({message: 'Internal Server Erroraa', isSuccess: false})
+        res.status(500).json({message: 'Internal Server Error', isSuccess: false})
+    }
+}
+
+
+export const whoami = async (req: AuthRequest, res: Response) => {
+    try{
+        if(!req.userId){
+            return res.status(401).json({isSuccess: false, message:"Unauthorized"})
+        }
+
+        const user = await prisma.user.findUnique({
+            where:{
+                id : req.userId,
+            },
+          select:  
+            {
+            id : true,
+            fullName: true,
+            email: true,
+            role: true
+
+            },
+        });
+
+        if(!user){
+            return res.status(404).json({isSuccess: false , message : "User Not Found"})
+        }
+
+
+        res.status(200).json({isSucces: true, message:"User fetched Successfully", User: user})
+
+
+    }catch(error){
+        console.error(error)
+        res.status(500).json({message: 'Internal Server Error', isSuccess: false})
     }
 }
