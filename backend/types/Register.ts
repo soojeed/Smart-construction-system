@@ -1,10 +1,10 @@
 
 
 export interface IRegister {
-    id : number;
+    id? : number;
     fullName: string;
     email: string;
-    passwordHash: string;
+    password: string;
     password_conform: string;
 }
 

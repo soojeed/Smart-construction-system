@@ -12,7 +12,7 @@ export const CreateUser = async (req: Request, res: Response) => {
     const data: IRegister = req.body;
 
     // passwords match
-    if (data.passwordHash !== data.password_conform) {
+    if (data.password !== data.password_conform) {
       return res.status(400).json({
         message: "Passwords do not match",
         isSuccess: false
@@ -32,10 +32,11 @@ export const CreateUser = async (req: Request, res: Response) => {
     }
 
     // hash password
-    const hashedPassword = await bcrypt.hash(data.passwordHash, 10);
+    const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const newUser = await prisma.user.create({
       data: {
+        
         fullName: data.fullName,
         email: data.email.toLowerCase(),
         passwordHash: hashedPassword
@@ -142,3 +143,14 @@ export const whoami = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Internal Server Error", isSuccess: false });
   }
 };
+
+export const updateRole = async (req:Request, res:Response) =>{
+  try{
+
+  }catch(error){
+    res.status(500).json({
+      isSucees: false,
+      message:"Internal Server Error!"
+    })
+  }
+}
