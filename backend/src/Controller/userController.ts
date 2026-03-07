@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
-import { ILogin, IRegister } from "../../types/Register";
+import { ILogin, IRegister, IUpdate } from "../types/Register";
 import { prisma } from "../lib/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import  {generateToken} from "../../helpers/jwt"
-import { AuthRequest } from "../../types/AuthRequest";
+import  {generateToken} from "../helpers/jwt"
+import { AuthRequest } from "../types/AuthRequest";
+import { catchError, shortRes } from "../constants/message";
+import { Role } from "../../generated/prisma/enums";
 
 // ---------------- REGISTER USER ----------------
 export const CreateUser = async (req: Request, res: Response) => {
@@ -39,14 +41,16 @@ export const CreateUser = async (req: Request, res: Response) => {
         
         fullName: data.fullName,
         email: data.email.toLowerCase(),
-        passwordHash: hashedPassword
+        passwordHash: hashedPassword,
+        role : data.role
+
       }
     });
 
     res.status(201).json({
       message: "User created successfully",
       isSuccess: true,
-      user: { id: newUser.id, email: newUser.email, fullName: newUser.fullName }
+      user: { id: newUser.id, email: newUser.email, fullName: newUser.fullName, role: newUser.role }
     });
 
   } catch (error) {
@@ -77,7 +81,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid email or password", isSuccess: false });
     }
 
-    const token =  generateToken(user.id)
+    const token = generateToken(user.id);
 
     res.status(200).json({
       message: "Login successful",
@@ -154,3 +158,39 @@ export const updateRole = async (req:Request, res:Response) =>{
     })
   }
 }
+
+export const updateUser = async (req: AuthRequest, res: Response) => {
+  try {
+
+    const userId = req.userId;
+
+    if (!userId) {
+      return shortRes(res, 401, "Unauthorized");
+    }
+
+    const data: IUpdate = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    });
+
+    if (!user) {
+      return shortRes(res, 404, "User not found");
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        fullName: data.fullName || user.fullName,
+        
+      }
+    });
+
+    return shortRes(res, 200, "User updated successfully", updatedUser);
+
+  } catch (error) {
+    catchError(error, res);
+  }
+};
