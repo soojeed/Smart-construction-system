@@ -15,7 +15,7 @@ CREATE TYPE "RequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'FULFILL
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "fullName" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "Project" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "projectName" TEXT NOT NULL,
     "location" TEXT,
     "totalBudget" DECIMAL(65,30) NOT NULL DEFAULT 0,
@@ -36,15 +36,15 @@ CREATE TABLE "Project" (
     "endDate" TIMESTAMP(3),
     "status" "ProjectStatus" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "managerId" TEXT,
+    "managerId" INTEGER,
 
     CONSTRAINT "Project_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "SubTask" (
-    "id" TEXT NOT NULL,
-    "projectId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "projectId" INTEGER NOT NULL,
     "taskName" TEXT NOT NULL,
     "description" TEXT,
     "startDate" TIMESTAMP(3),
@@ -56,7 +56,7 @@ CREATE TABLE "SubTask" (
 
 -- CreateTable
 CREATE TABLE "Supplier" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "supplierName" TEXT NOT NULL,
     "contactPerson" TEXT,
     "phone" TEXT,
@@ -69,101 +69,101 @@ CREATE TABLE "Supplier" (
 
 -- CreateTable
 CREATE TABLE "PurchaseOrder" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "orderNumber" TEXT NOT NULL,
     "status" "POStatus" NOT NULL DEFAULT 'PENDING',
     "totalAmount" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "orderDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "projectId" TEXT NOT NULL,
-    "supplierId" TEXT NOT NULL,
+    "projectId" INTEGER NOT NULL,
+    "supplierId" INTEGER NOT NULL,
 
     CONSTRAINT "PurchaseOrder_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "POItem" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "itemDescription" TEXT NOT NULL,
     "quantity" DECIMAL(65,30) NOT NULL,
     "unitPrice" DECIMAL(65,30) NOT NULL,
-    "orderId" TEXT NOT NULL,
+    "orderId" INTEGER NOT NULL,
 
     CONSTRAINT "POItem_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "SupplierPayment" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "amountPaid" DECIMAL(65,30) NOT NULL,
     "paymentMethod" TEXT,
     "paymentDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "orderId" TEXT NOT NULL,
+    "orderId" INTEGER NOT NULL,
 
     CONSTRAINT "SupplierPayment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Inventory" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "itemName" TEXT NOT NULL,
     "currentQuantity" DECIMAL(65,30) NOT NULL DEFAULT 0,
     "unit" TEXT,
     "minStockLevel" DECIMAL(65,30) NOT NULL DEFAULT 10,
     "lastUpdated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "projectId" TEXT NOT NULL,
+    "projectId" INTEGER NOT NULL,
 
     CONSTRAINT "Inventory_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "MaterialRequest" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "status" "RequestStatus" NOT NULL DEFAULT 'PENDING',
     "requestDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "projectId" TEXT NOT NULL,
-    "requesterId" TEXT NOT NULL,
+    "projectId" INTEGER NOT NULL,
+    "requesterId" INTEGER NOT NULL,
 
     CONSTRAINT "MaterialRequest_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "RequestItem" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "itemName" TEXT NOT NULL,
     "quantityRequested" DECIMAL(65,30) NOT NULL,
-    "requestId" TEXT NOT NULL,
+    "requestId" INTEGER NOT NULL,
 
     CONSTRAINT "RequestItem_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Equipment" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "type" TEXT,
     "dailyRate" DECIMAL(65,30),
     "status" TEXT NOT NULL DEFAULT 'AVAILABLE',
-    "projectId" TEXT,
+    "projectId" INTEGER,
 
     CONSTRAINT "Equipment_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Expense" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "category" TEXT,
     "amount" DECIMAL(65,30) NOT NULL,
     "description" TEXT,
     "expenseDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "projectId" TEXT NOT NULL,
-    "recordedById" TEXT NOT NULL,
+    "projectId" INTEGER NOT NULL,
+    "recordedById" INTEGER NOT NULL,
 
     CONSTRAINT "Expense_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Labor" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "fullName" TEXT NOT NULL,
     "trade" TEXT,
     "dailyWage" DECIMAL(65,30) NOT NULL,
@@ -173,34 +173,34 @@ CREATE TABLE "Labor" (
 
 -- CreateTable
 CREATE TABLE "Attendance" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "workDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT,
-    "laborId" TEXT NOT NULL,
-    "projectId" TEXT NOT NULL,
+    "laborId" INTEGER NOT NULL,
+    "projectId" INTEGER NOT NULL,
 
     CONSTRAINT "Attendance_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "DailyLog" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "reportDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "workSummary" TEXT NOT NULL,
     "manpowerCount" INTEGER,
     "weather" TEXT,
-    "projectId" TEXT NOT NULL,
-    "engineerId" TEXT NOT NULL,
+    "projectId" INTEGER NOT NULL,
+    "engineerId" INTEGER NOT NULL,
 
     CONSTRAINT "DailyLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "LogPhoto" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "url" TEXT NOT NULL,
     "caption" TEXT,
-    "logId" TEXT NOT NULL,
+    "logId" INTEGER NOT NULL,
 
     CONSTRAINT "LogPhoto_pkey" PRIMARY KEY ("id")
 );

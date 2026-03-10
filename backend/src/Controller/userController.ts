@@ -68,33 +68,44 @@ export const login = async (req: Request, res: Response) => {
     const data: ILogin = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase() }
+      where: {
+        email: data.email.toLowerCase(),
+      },
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password", isSuccess: false });
+      res.status(401).json({
+        isSuccess: false,
+        message: 'Incorrect email or password',
+      });
+
+      return;
     }
 
-    const isMatch = await bcrypt.compare(data.passwordHash, user.passwordHash);
+    const isPasswordCorrect = await bcrypt.compare(user.passwordHash, data.passwordHash);
 
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password", isSuccess: false });
+    if (!isPasswordCorrect) {
+      res.status(401).json({
+        isSuccess: false,
+        message: 'Incorrect email or password',
+      });
+
+      return;
     }
 
+    const { passwordHash,  ...rest } = user;
     const token = generateToken(user.id);
 
     res.status(200).json({
-      message: "Login successful",
       isSuccess: true,
-      token,
-      user: { id: user.id, fullName: user.fullName, email: user.email, role: user.role }
+      user: rest,
+      token: token,
     });
-
   } catch (error) {
-    console.error(error);
+    console.log(error);
     res.status(500).json({
-      message: "Something went wrong",
-      isSuccess: false
+      isSuccess: false,
+      message: 'Something went wrong!',
     });
   }
 };
